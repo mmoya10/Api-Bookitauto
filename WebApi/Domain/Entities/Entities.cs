@@ -144,6 +144,16 @@ namespace WebApi.Domain.Entities
         public ICollection<StaffSchedule> Schedules { get; set; } = new List<StaffSchedule>();
         public ICollection<StaffException> Exceptions { get; set; } = new List<StaffException>();
     }
+    public class PasswordReset
+    {
+        public Guid Id { get; set; }
+        public Guid StaffId { get; set; }
+        public Staff Staff { get; set; } = null!;
+        public string TokenHash { get; set; } = null!;      // SHA256 del token
+        public DateTimeOffset ExpiresAt { get; set; }       // p.ej., ahora + 30 min
+        public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset? UsedAt { get; set; }         // cuando se use
+    }
 
     public class StaffPermission
     {
@@ -740,4 +750,57 @@ namespace WebApi.Domain.Entities
         public DateTimeOffset EndDate { get; set; }
         public string? Notes { get; set; }
     }
+
+    // jobs
+    // Entity
+    public class SmtpConfig
+    {
+        public Guid Id { get; set; }
+        public Guid? BranchId { get; set; }            // null => config global plataforma
+        public string Host { get; set; } = null!;
+        public int Port { get; set; } = 587;
+        public bool UseSsl { get; set; } = true;
+        public string Username { get; set; } = null!;
+        public string PasswordEnc { get; set; } = null!; // cifrado
+        public string FromEmail { get; set; } = null!;
+        public string? FromName { get; set; }
+        public bool Active { get; set; } = true;
+        public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset? UpdatedAt { get; set; }
+    }
+    public class PaymentProviderConfig
+    {
+        public Guid Id { get; set; }
+        public Guid BranchId { get; set; }         // o BusinessId si lo prefieres
+        public string Provider { get; set; } = "stripe";
+        public string PublicKey { get; set; } = null!;
+        public string SecretKeyEnc { get; set; } = null!;
+        public string? WebhookSecretEnc { get; set; }
+        public bool Active { get; set; } = true;
+        public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset? UpdatedAt { get; set; }
+    }
+    // UNIQUE(branch_id, provider) para evitar duplicados
+    public class UserDevice
+    {
+        public Guid Id { get; set; }
+        public Guid UserId { get; set; }
+        public string Platform { get; set; } = "fcm"; // fcm|apns
+        public string DeviceToken { get; set; } = null!;
+        public bool NotificationsEnabled { get; set; } = true;
+        public DateTimeOffset LastSeenAt { get; set; } = DateTimeOffset.UtcNow;
+    }
+    // UNIQUE(DeviceToken)
+    // ===== Payments/Webhooks =====
+    public class PaymentEvent
+    {
+        public Guid Id { get; set; }
+        public string Provider { get; set; } = "stripe";  // stripe|...
+        public string EventId { get; set; } = null!;
+        public DateTimeOffset ReceivedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset? ProcessedAt { get; set; }
+        public string? Status { get; set; }               // processed|error
+        public string? Error { get; set; }
+    }
+
 }

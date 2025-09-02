@@ -17,7 +17,7 @@ namespace WebApi.Infrastructure.Persistence
 
             var config = builder.Build();
             var cs = config.GetConnectionString("Default") 
-                     ?? "Host=localhost;Port=5432;Database=bookitauto;Username=postgres;Password=postgres";
+                     ?? "Host=ep-soft-queen-a97lrflo-pooler.gwc.azure.neon.tech;Database=neondb;Username=neondb_owner;Password=npg_7zjuceU1bPBO;Ssl Mode=Require;Trust Server Certificate=true";
 
             var options = new DbContextOptionsBuilder<AppDbContext>()
                 .UseNpgsql(cs)

@@ -70,6 +70,13 @@ namespace WebApi.Infrastructure.Persistence
         public DbSet<VacationCounter> VacationCounters => Set<VacationCounter>();
         public DbSet<HoursCounter> HoursCounters => Set<HoursCounter>();
         public DbSet<Absence> Absences => Set<Absence>();
+        public DbSet<PasswordReset> PasswordResets => Set<PasswordReset>();
+        public DbSet<PaymentEvent> PaymentEvents => Set<PaymentEvent>();
+        public DbSet<SmtpConfig> SmtpConfigs => Set<SmtpConfig>();
+        public DbSet<PaymentProviderConfig> PaymentProviderConfigs => Set<PaymentProviderConfig>();
+        public DbSet<UserDevice> UserDevices => Set<UserDevice>();
+
+
 
         protected override void OnModelCreating(ModelBuilder b)
         {
@@ -105,7 +112,11 @@ namespace WebApi.Infrastructure.Persistence
             // Unique & indexes
             b.Entity<Business>().HasIndex(x => x.Slug).IsUnique();
             b.Entity<Branch>().HasIndex(x => new { x.BusinessId, x.Slug }).IsUnique();
-            b.Entity<BranchSchedule>().HasCheckConstraint("CK_BranchSchedule_Time", "\"EndTime\" > \"StartTime\"");
+            b.Entity<BranchSchedule>()
+                .ToTable(tb => tb.HasCheckConstraint(
+                    "CK_BranchSchedule_Time",
+                    "\"EndTime\" > \"StartTime\""));
+
 
             b.Entity<Role>().HasIndex(x => x.Name).IsUnique();
             b.Entity<Permission>().HasIndex(x => x.Name).IsUnique();
@@ -165,6 +176,21 @@ namespace WebApi.Infrastructure.Persistence
             b.Entity<WaitlistEntry>().HasIndex(e => e.TimeWindow).HasMethod("gist");
             b.Entity<WaitlistEntry>().HasIndex(e => new { e.BranchId, e.ServiceId, e.Status });
             b.Entity<WaitlistEntryExtra>().HasKey(x => new { x.EntryId, x.ExtraId });
+
+            b.Entity<PasswordReset>()
+            .HasIndex(x => new { x.StaffId, x.TokenHash })
+            .IsUnique();
+
+            b.Entity<PasswordReset>()
+             .HasIndex(x => x.ExpiresAt);
+            b.Entity<PaymentEvent>().HasIndex(x => new { x.Provider, x.EventId }).IsUnique();
+
+            b.Entity<PaymentProviderConfig>()
+    .HasIndex(x => new { x.BranchId, x.Provider }).IsUnique();
+
+            b.Entity<UserDevice>()
+                .HasIndex(x => new { x.UserId, x.DeviceToken }).IsUnique();
+
 
             // Default: evitar cascadas peligrosas
             foreach (var entityType in b.Model.GetEntityTypes())
