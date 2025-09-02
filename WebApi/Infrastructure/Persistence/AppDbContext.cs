@@ -76,6 +76,12 @@ namespace WebApi.Infrastructure.Persistence
         public DbSet<PaymentProviderConfig> PaymentProviderConfigs => Set<PaymentProviderConfig>();
         public DbSet<UserDevice> UserDevices => Set<UserDevice>();
 
+        // AppDbContext.cs (DbSets)
+        public DbSet<SupportTicket> SupportTickets => Set<SupportTicket>();
+        public DbSet<ImpersonationLog> ImpersonationLogs => Set<ImpersonationLog>();
+        public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
+        public DbSet<BusinessSubscription> BusinessSubscriptions => Set<BusinessSubscription>();
+        public DbSet<SubscriptionUsage> SubscriptionUsages => Set<SubscriptionUsage>();
 
 
         protected override void OnModelCreating(ModelBuilder b)
@@ -113,9 +119,9 @@ namespace WebApi.Infrastructure.Persistence
             b.Entity<Business>().HasIndex(x => x.Slug).IsUnique();
             b.Entity<Branch>().HasIndex(x => new { x.BusinessId, x.Slug }).IsUnique();
             b.Entity<BranchSchedule>()
-                .ToTable(tb => tb.HasCheckConstraint(
-                    "CK_BranchSchedule_Time",
-                    "\"EndTime\" > \"StartTime\""));
+            .ToTable(tb => tb.HasCheckConstraint(
+                "CK_BranchSchedule_Time",
+                "\"EndTime\" > \"StartTime\""));
 
 
             b.Entity<Role>().HasIndex(x => x.Name).IsUnique();
@@ -190,6 +196,20 @@ namespace WebApi.Infrastructure.Persistence
 
             b.Entity<UserDevice>()
                 .HasIndex(x => new { x.UserId, x.DeviceToken }).IsUnique();
+            // OnModelCreating:
+            b.Entity<SupportTicket>()
+                .HasIndex(x => new { x.BusinessId, x.Status });
+
+            b.Entity<ImpersonationLog>()
+                .HasIndex(x => new { x.PlatformStaffId, x.PerformedAt });
+
+            b.Entity<BusinessSubscription>()
+                .HasIndex(x => new { x.BusinessId, x.Status });
+
+            b.Entity<SubscriptionUsage>()
+                .HasIndex(x => new { x.BusinessId, x.Year, x.Month })
+                .IsUnique();
+
 
 
             // Default: evitar cascadas peligrosas

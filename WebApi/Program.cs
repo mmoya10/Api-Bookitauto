@@ -93,6 +93,12 @@ builder.Services.AddScoped<IBillingService, BillingService>();
 builder.Services.AddScoped<IUsersMeService, UsersMeService>();
 builder.Services.AddScoped<IPublicService, PublicService>();
 builder.Services.AddScoped<WebApi.Infrastructure.Services.Payments.IPaymentWebhookService, WebApi.Infrastructure.Services.Payments.PaymentWebhookService>();
+// Services Platform
+builder.Services.AddScoped<WebApi.Infrastructure.Services.Platform.IPlatformAccountService, WebApi.Infrastructure.Services.Platform.PlatformAccountService>();
+builder.Services.AddScoped<WebApi.Infrastructure.Services.Platform.IPlatformTicketService, WebApi.Infrastructure.Services.Platform.PlatformTicketService>();
+builder.Services.AddScoped<WebApi.Infrastructure.Services.Platform.IPlatformSubscriptionService, WebApi.Infrastructure.Services.Platform.PlatformSubscriptionService>();
+builder.Services.AddScoped<WebApi.Infrastructure.Services.Platform.IImpersonationService, WebApi.Infrastructure.Services.Platform.ImpersonationService>();
+
 
 // Servicios de notificación
 builder.Services.AddScoped<WebApi.Infrastructure.Services.Notification.INotificationConfigService, WebApi.Infrastructure.Services.Notification.NotificationConfigService>();
@@ -105,6 +111,7 @@ builder.Services.AddHostedService<WebApi.Infrastructure.HostedServices.BookingRe
 builder.Services.AddHostedService<WebApi.Infrastructure.HostedServices.NotificationDispatcher>();
 builder.Services.AddHostedService<WebApi.Infrastructure.HostedServices.CashAutoCloseJob>();
 builder.Services.AddHostedService<WebApi.Infrastructure.HostedServices.HoldSlotSweeper>();
+builder.Services.AddHostedService<WebApi.Infrastructure.HostedServices.SubscriptionBillingJob>();
 
 builder.Services.AddControllers(options =>
 {

@@ -4,11 +4,14 @@ namespace WebApi.Infrastructure.Auth
 {
     public interface ICurrentUser
     {
-        Guid? UserId { get; }   // <-- NUEVO (usuario cliente)
-        Guid? StaffId { get; }  // staff (panel interno)
-        string Role { get; }    // Admin | AdminBranch | Staff
-        Guid? BranchId { get; } // del token
+        // ← AÑADIR esta propiedad
+        Guid? UserId { get; }          // Id del usuario (cliente final) si el token es de app
+
+        Guid? StaffId { get; }         // Id del staff si el token es del panel
+        string Role { get; }           // Admin | AdminBranch | Staff | Platform
+        Guid? BranchId { get; }        // null si Platform o token de cliente
         bool HasPermission(string permission);
+        bool IsPlatform { get; }
     }
 
     public sealed class CurrentUser : ICurrentUser
@@ -31,7 +34,10 @@ namespace WebApi.Infrastructure.Auth
         public string Role => _user.FindFirst("role")?.Value ?? "Staff";
 
         public Guid? BranchId =>
-            Guid.TryParse(_user.FindFirst("branch_id")?.Value, out var gb) ? gb : null;
+            Guid.TryParse(_user.FindFirst("branch_id")?.Value, out var g) ? g : null;
+
+        public bool IsPlatform =>
+            string.Equals(Role, "Platform", StringComparison.OrdinalIgnoreCase);
 
         public bool HasPermission(string permission) =>
             _user.FindAll("perm").Any(c => string.Equals(c.Value, permission, StringComparison.OrdinalIgnoreCase));

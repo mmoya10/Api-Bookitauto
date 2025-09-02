@@ -802,5 +802,81 @@ namespace WebApi.Domain.Entities
         public string? Status { get; set; }               // processed|error
         public string? Error { get; set; }
     }
+    public class SupportTicket
+    {
+        public Guid Id { get; set; }
+        public Guid BusinessId { get; set; }
+        public Business Business { get; set; } = null!;
+        public Guid? BranchId { get; set; }
+        public Branch? Branch { get; set; }
+        public Guid? CreatedByStaffId { get; set; }
+        public Staff? CreatedByStaff { get; set; }
+        public string Subject { get; set; } = null!;
+        public string Message { get; set; } = null!;
+        public string Severity { get; set; } = "normal"; // low|normal|high|urgent
+        public string Status { get; set; } = "open";     // open|in_progress|resolved|closed
+        public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset? UpdatedAt { get; set; }
+        public DateTimeOffset? ResolvedAt { get; set; }
+        public string? ResolutionNote { get; set; }
+    }
+    public class ImpersonationLog
+    {
+        public Guid Id { get; set; }
+        public Guid PlatformStaffId { get; set; }   // tu staff
+        public Guid TargetStaffId { get; set; }     // staff del cliente
+        public Guid BusinessId { get; set; }
+        public Guid? BranchId { get; set; }
+        public DateTimeOffset PerformedAt { get; set; } = DateTimeOffset.UtcNow;
+        public string Reason { get; set; } = "support";
+        public string? IpAddress { get; set; }
+        public string? UserAgent { get; set; }
+    }
+
+    public class SubscriptionPlan
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = null!;
+        public decimal BasePrice { get; set; }       // €/mes
+        public decimal PricePerStaff { get; set; }
+        public decimal PricePerBranch { get; set; }
+        public bool Active { get; set; } = true;
+        public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset? UpdatedAt { get; set; }
+    }
+
+    public class BusinessSubscription
+    {
+        public Guid Id { get; set; }
+        public Guid BusinessId { get; set; }
+        public Business Business { get; set; } = null!;
+        public Guid PlanId { get; set; }
+        public SubscriptionPlan Plan { get; set; } = null!;
+        public string Status { get; set; } = "active"; // active|paused|cancel_requested|cancelled
+        public int BillingAnchorDay { get; set; }      // día del mes (1..28/30/31)
+        public DateTimeOffset StartedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset? CancelAt { get; set; }
+        public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset? UpdatedAt { get; set; }
+    }
+
+    public class SubscriptionUsage
+    {
+        public Guid Id { get; set; }
+        public Guid BusinessId { get; set; }
+        public Guid SubscriptionId { get; set; }
+        public int Year { get; set; }                 // período facturado
+        public int Month { get; set; }
+        public int StaffCount { get; set; }           // únicos creados en el mes (ver regla)
+        public int BranchCount { get; set; }          // únicos creados en el mes
+        public decimal BasePrice { get; set; }
+        public decimal StaffPrice { get; set; }
+        public decimal BranchPrice { get; set; }
+        public decimal Total { get; set; }
+        public string Status { get; set; } = "pending"; // pending|charged|failed
+        public string? ProviderInvoiceId { get; set; }  // id invoice/checkout Stripe
+        public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset? ChargedAt { get; set; }
+    }
 
 }

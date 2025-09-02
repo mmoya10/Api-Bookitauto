@@ -67,6 +67,7 @@ namespace WebApi.Infrastructure.Policies
         public const string AdminOnly = "AdminOnly";
         public const string AdminOrBranchAdmin = "AdminOrBranchAdmin";
         public const string RequireBranchScope = "RequireBranchScope";
+        public const string PlatformOnly = "PlatformOnly";
 
         // Builder helpers
         public static AuthorizationOptions AddBookingAutoPolicies(this AuthorizationOptions opt)
@@ -76,6 +77,9 @@ namespace WebApi.Infrastructure.Policies
             opt.AddPolicy(AdminOrBranchAdmin, p => p.AddRequirements(new AdminOrBranchAdminRequirement()));
 
             opt.AddPolicy(RequireBranchScope, p => p.AddRequirements(new BranchScopeRequirement()));
+
+            opt.AddPolicy("Perm.Platform.View", p => p.RequireClaim("perm", "platform:view"));
+            opt.AddPolicy("Perm.Platform.Manage", p => p.RequireClaim("perm", "platform:manage"));
 
             // Permisos “granulares” se añaden ad-hoc en Program.cs (ver abajo)
             return opt;

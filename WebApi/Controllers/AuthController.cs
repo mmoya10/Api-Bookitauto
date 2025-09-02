@@ -22,8 +22,8 @@ namespace WebApi.Controllers
         }
 
         /// <summary>
-        /// Staff login (no hay registro desde fuera).
-        /// Devuelve staff/rol/permisos y, si role=Admin, listado de branches (id,name,slug).
+        /// Staff login (incluye Platform). Sin registro externo.
+        /// Si Role=Admin => devuelve listado de branches; AdminBranch/Staff/Platform no.
         /// </summary>
         [HttpPost("staff/login")]
         public async Task<ActionResult<AuthResponse>> StaffLogin([FromBody] StaffLoginRequest req, CancellationToken ct)
@@ -32,17 +32,19 @@ namespace WebApi.Controllers
             if (res is null) return Unauthorized(new { error = "Credenciales inválidas" });
 
             var (staff, role, perms) = res.Value;
-            var token = _jwt.CreateStaffToken(staff, role, perms);
+
+            // Detectar si es Platform para emitir token sin branch_id
+            var roleNorm = (role?.Name ?? "staff").Trim().ToLowerInvariant();
+            var isPlatform = roleNorm is "platform" or "staffempresa" or "owner";
+
+            var token = _jwt.CreateStaffToken(staff, role, perms, isPlatform: isPlatform);
 
             object[]? branches = null;
 
-            // Si es Admin, cargamos branches del mismo Business que su branch actual
-            var roleName = (role?.Name ?? "staff").Trim().ToLowerInvariant();
-            if (roleName == "admin")
+            // Solo Admin (global del negocio) recibe selector de sucursales
+            if (!isPlatform && roleNorm == "admin")
             {
-                // staff.Branch está incluido en ValidateStaffAsync
                 var businessId = staff.Branch.BusinessId;
-
                 branches = await _db.Branches
                     .Where(b => b.BusinessId == businessId && (b.Status == "active" || b.Status == "inactive"))
                     .OrderBy(b => b.Name)
@@ -58,7 +60,7 @@ namespace WebApi.Controllers
                 Staff = new
                 {
                     id = staff.Id,
-                    branchId = staff.BranchId,
+                    branchId = staff.BranchId, // en Platform viene relleno por entidad, pero NO va en el token
                     username = staff.Username,
                     email = staff.Email,
                     firstName = staff.FirstName,
@@ -72,15 +74,13 @@ namespace WebApi.Controllers
         }
 
         /// <summary>
-        /// Forgot password para staff. No revela si existe el usuario.
-        /// En desarrollo devuelve el token para pruebas.
+        /// Forgot password para staff/platform. No revela existencia del usuario.
+        /// En desarrollo devuelve el token (devToken) para pruebas.
         /// </summary>
         [HttpPost("forgot-password")]
         public async Task<IActionResult> Forgot([FromBody] ForgotPasswordRequest req, CancellationToken ct)
         {
-            // TTL de 30 min
             var (ok, token) = await _auth.CreatePasswordResetAsync(req.Login, TimeSpan.FromMinutes(30), ct);
-
             if (_env.IsDevelopment() && ok && token is not null)
                 return Ok(new { message = "Si existe un usuario con ese login, se ha enviado un email con instrucciones.", devToken = token });
 
@@ -95,10 +95,7 @@ namespace WebApi.Controllers
         {
             var ok = await _auth.ResetPasswordAsync(req.Token, req.NewPassword, ct);
             if (!ok) return BadRequest(new { error = "Token inválido o expirado" });
-
             return Ok(new { message = "Contraseña actualizada" });
         }
-
-        // Eliminamos endpoints de registro/login de cliente final en este controller (serán otros)
     }
 }

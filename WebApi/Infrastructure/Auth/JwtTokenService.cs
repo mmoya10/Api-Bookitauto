@@ -9,16 +9,16 @@ namespace WebApi.Infrastructure.Auth
 {
     public interface IJwtTokenService
     {
-        string CreateStaffToken(Staff staff, Role? role, IEnumerable<string> permissionNames);
+        // 👈 añadimos isPlatform para emitir tokens sin branch_id
+        string CreateStaffToken(Staff staff, Role? role, IEnumerable<string> permissionNames, bool isPlatform = false);
     }
 
     public sealed class JwtTokenService : IJwtTokenService
     {
         private readonly JwtOptions _opt;
-
         public JwtTokenService(IOptions<JwtOptions> opt) => _opt = opt.Value;
 
-        public string CreateStaffToken(Staff staff, Role? role, IEnumerable<string> permissionNames)
+        public string CreateStaffToken(Staff staff, Role? role, IEnumerable<string> permissionNames, bool isPlatform = false)
         {
             var now = DateTimeOffset.UtcNow;
 
@@ -28,14 +28,17 @@ namespace WebApi.Infrastructure.Auth
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new(ClaimTypes.NameIdentifier, staff.Id.ToString()),
                 new(ClaimTypes.Name, staff.Username ?? staff.Email ?? staff.Id.ToString()),
-                new("role", NormalizeRole(role?.Name ?? "staff")),                 // Admin | AdminBranch | Staff
-                new("branch_id", staff.BranchId.ToString()),                       // alcance por sucursal
+                new("role", isPlatform ? "Platform" : NormalizeRole(role?.Name ?? "staff")),
                 new("is_manager", staff.IsManager ? "1" : "0"),
                 new("status", staff.Status)
             };
 
-            // permissions -> varios "perm:XXX"
-            claims.AddRange(permissionNames.Select(p => new Claim("perm", p)));
+            // Solo los no-Platform llevan alcance de branch en el token
+            if (!isPlatform)
+                claims.Add(new Claim("branch_id", staff.BranchId.ToString()));
+
+            foreach (var p in permissionNames)
+                claims.Add(new Claim("perm", p));
 
             var creds = new SigningCredentials(
                 new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_opt.Key)),
@@ -60,6 +63,7 @@ namespace WebApi.Infrastructure.Auth
             {
                 "admin" => "Admin",
                 "adminbranch" or "branchadmin" or "manager" => "AdminBranch",
+                "platform" or "staffempresa" or "owner" => "Platform",
                 _ => "Staff"
             };
         }
