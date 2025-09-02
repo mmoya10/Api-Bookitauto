@@ -60,7 +60,7 @@ namespace WebApi.Controllers
                 Staff = new
                 {
                     id = staff.Id,
-                    branchId = staff.BranchId, // en Platform viene relleno por entidad, pero NO va en el token
+                    branchId = staff.BranchId, 
                     username = staff.Username,
                     email = staff.Email,
                     firstName = staff.FirstName,

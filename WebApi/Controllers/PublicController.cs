@@ -4,7 +4,7 @@ using WebApi.Infrastructure.Services;
 namespace WebApi.Controllers
 {
     [ApiController]
-    [Route("api")]
+    [Route("api/public")] // 👈 antes: "api"
     public sealed class PublicController : ControllerBase
     {
         private readonly IPublicService _svc;
