@@ -24,14 +24,26 @@ namespace WebApi.Infrastructure.Policies
     }
 
     public sealed class PermissionHandler : AuthorizationHandler<PermissionRequirement>
+{
+    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
     {
-        protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
+        // Si es Admin global, siempre pasa
+        var role = context.User.FindFirst("role")?.Value;
+        if (role == "Admin")
         {
-            if (context.User.FindAll("perm").Any(c => string.Equals(c.Value, requirement.Permission, StringComparison.OrdinalIgnoreCase)))
-                context.Succeed(requirement);
-            return Task.CompletedTask;
+            context.Succeed(requirement);
         }
+        // Si no, comprobar el permiso granular
+        else if (context.User.FindAll("perm").Any(c =>
+                     string.Equals(c.Value, requirement.Permission, StringComparison.OrdinalIgnoreCase)))
+        {
+            context.Succeed(requirement);
+        }
+
+        return Task.CompletedTask;
     }
+}
+
 
     // Requisito 3: alcance por sucursal (header X-Branch-Id debe coincidir salvo Admin)
     public sealed class BranchScopeRequirement : IAuthorizationRequirement { }

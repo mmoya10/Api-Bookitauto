@@ -37,6 +37,9 @@ builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o =>
     {
+        // ✨ Importante: no remapear claims automáticamente
+        o.MapInboundClaims = false;
+
         var cfg = builder.Configuration.GetSection("Jwt");
         o.TokenValidationParameters = new TokenValidationParameters
         {
@@ -47,7 +50,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(cfg["Key"]!)),
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromSeconds(30)
+            ClockSkew = TimeSpan.FromSeconds(30),
+
+            // ✨ Importante: tu claim de rol se llama "role"
+            RoleClaimType = "role",
+            // (opcional) si quieres fijar el "nombre" también:
+            // NameClaimType = "sub",
         };
     });
 
